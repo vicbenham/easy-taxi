@@ -1,19 +1,19 @@
 package org.easygroup.easytaxi.domain;
 
+import lombok.Getter;
+
 public class Booking {
-    private double price;
-    private final static double PRICE_PER_KILOMETER = 0.5;
 
-    public Booking(){
+    @Getter
+    private Double price;
+    private final Journey journey;
 
+    public Booking(Journey journey) {
+        this.journey = journey;
     }
 
-    public double getPrice(){
-        return price;
-    }
-
-    public void calculatePrice(double km){
-        this.price = km * PRICE_PER_KILOMETER;
+    public void calculatePrice(){
+         this.price = journey.calculatePrice();
     }
 
 }
