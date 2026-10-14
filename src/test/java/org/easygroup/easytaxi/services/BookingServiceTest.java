@@ -1,8 +1,10 @@
 package org.easygroup.easytaxi.services;
+import org.easygroup.easytaxi.domain.Booking;
+import org.easygroup.easytaxi.domain.Driver;
+import org.easygroup.easytaxi.domain.Rider;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class BookingServiceTest {
 
@@ -13,46 +15,42 @@ class BookingServiceTest {
     }
    @Test
     void riderShouldHaveEnoughMoney(){
-        double riderMoney = 100.00;
-        double ridePrice = 20.00;
-        boolean isBooked = bookingService.bookRide(riderMoney,ridePrice,true, false);
-        assertTrue(isBooked);
+        Booking booking = bookingService.bookRide(createDriver(true), createRider(100), 40.00);
+        assertNotNull(booking);
    }
     @Test
     void riderShouldNotHaveEnoughMoney(){
-        double riderMoney = 20.00;
-        double ridePrice = 50.00;
-        boolean isBooked = bookingService.bookRide(riderMoney,ridePrice, true, false);
-        assertFalse(isBooked);
+        Booking booking = bookingService.bookRide(createDriver(true), createRider(20), 100.00);
+        assertNotNull(booking);
     }
 
     @Test
     void driverShouldBeAvailable(){
-        boolean isDriverAvailable = true;
-        boolean isBooked = bookingService.bookRide(100.00, 20.00, isDriverAvailable, false);
-        assertTrue(isBooked);
+        Booking booking = bookingService.bookRide(createDriver(true), createRider(100.0), 5);
+        assertNotNull(booking);
     }
 
     @Test
     void driverShouldNotBeAvailable(){
-        boolean isDriverAvailable = false;
-        boolean isBooked = bookingService.bookRide(100.00, 20.00, isDriverAvailable, false);
-        assertFalse(isBooked);
+        assertThrows(RuntimeException.class, () -> { bookingService.bookRide(createDriver(false), createRider(100.0), 5);});
     }
 
     @Test
     void bookingShouldBeCanceledBeforeRebooking(){
-        boolean isBooked = false;
-        boolean isRebookingAvailable = bookingService.bookRide(100.00, 20.00, true, isBooked);
-        assertTrue(isRebookingAvailable);
+        Rider rider = createRider(20);
+        Booking booking = bookingService.bookRide(createDriver(true), rider, 5);
+        rider.bookRide(booking);
+        assertThrows(RuntimeException.class, () -> {
+            bookingService.bookRide(createDriver(true), rider, 8);
+        });
     }
 
-    @Test
-    void bookingShouldNotBeCanceledBeforeRebooking(){
-        boolean isBooked = true;
-        boolean isRebookingAvailable = bookingService.bookRide(100.00, 20.00, true, isBooked);
-        assertFalse(isRebookingAvailable);
+    private Rider createRider(double money){
+        return new Rider(money);
     }
 
+    private Driver createDriver(boolean available){
+        return new Driver(available);
+    }
 }
 

@@ -1,10 +1,18 @@
 package org.easygroup.easytaxi.services;
 
+import org.easygroup.easytaxi.domain.Booking;
+import org.easygroup.easytaxi.domain.Driver;
+import org.easygroup.easytaxi.domain.Rider;
+
+import java.util.Objects;
+
 public class BookingService {
 
-    public boolean bookRide(double riderMoney,double ridePrice, boolean isDriverAvailable, boolean isBooked){
-        if(isBooked) return false;
-        if(!isDriverAvailable) return false;
-        return riderMoney >= ridePrice;
+    public Booking bookRide(Driver driver, Rider rider, double km) {
+        Booking booking = new Booking();
+        if(Objects.nonNull(rider.getCurrentRide())) throw new RuntimeException();
+        if(!driver.isAvailable()) throw new RuntimeException();
+        booking.calculatePrice(km);
+        return booking;
     }
 }
