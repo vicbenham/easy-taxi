@@ -4,10 +4,13 @@ import org.easygroup.easytaxi.domain.Booking;
 import org.easygroup.easytaxi.domain.Driver;
 import org.easygroup.easytaxi.domain.Journey;
 import org.easygroup.easytaxi.domain.Rider;
+import org.easygroup.easytaxi.exceptions.EasyTaxiException;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestClassOrder;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import java.time.LocalDate;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 
 class CancelRideUseCaseTest {
@@ -37,12 +40,30 @@ class CancelRideUseCaseTest {
                 createJourney("LE HAVRE", "PARIS", 10.00));
         rider.bookRide(booking);
         cancelRideUseCase.cancelCurrentRide(rider);
-        assertEquals(90.00, rider.getMoney());
+        assertEquals(95.00, rider.getMoney());
+    }
+
+    @Test
+    void riderShouldNotBeAbleToCancelRideIfHeHasNoCurrentRide(){
+        Rider rider = createRider(100.00);
+        assertThrows(EasyTaxiException.class, () -> cancelRideUseCase.cancelCurrentRide(rider), "There is no ride to cancel");
+    }
+
+    @Test
+    void riderShouldNotPayCancelPriceIfBirthday(){
+        Rider rider = new Rider(100.00, LocalDate.now());
+        Booking booking = bookRideUseCase.bookRide(
+                createDriver(true),
+                rider,
+                createJourney("LE HAVRE", "PARIS", 10.00));
+        rider.bookRide(booking);
+        cancelRideUseCase.cancelCurrentRide(rider);
+        assertEquals(100.00, rider.getMoney());
     }
 
     // HELPERS
     private Rider createRider(double money){
-        return new Rider(money);
+        return new Rider(money, LocalDate.of(1990, 1, 1));
     }
 
     private Driver createDriver(boolean available){

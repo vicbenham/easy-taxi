@@ -5,6 +5,8 @@ import org.easygroup.easytaxi.domain.Journey;
 import org.easygroup.easytaxi.domain.Rider;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDate;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class BookRideUseCaseTest {
@@ -94,7 +96,7 @@ class BookRideUseCaseTest {
 
     // HELPERS
     private Rider createRider(double money){
-        return new Rider(money);
+        return new Rider(money, LocalDate.of(1990, 1, 1));
     }
 
     private Driver createDriver(boolean available){

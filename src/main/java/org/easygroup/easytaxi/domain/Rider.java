@@ -1,16 +1,23 @@
 package org.easygroup.easytaxi.domain;
 
+import java.time.LocalDate;
+
 public class Rider {
     private double money;
     private Booking currentRide;
+    private LocalDate birthDate;
 
-    public Rider(double money) {
+    public Rider(double money, LocalDate birthDate) {
         this.money = money;
+        this.birthDate = birthDate;
         this.currentRide = null;
     }
 
     public double getMoney(){
         return money;
+    }
+    public LocalDate getBirthDate() {
+        return birthDate;
     }
 
     public Booking getCurrentRide() {
