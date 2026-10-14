@@ -7,7 +7,7 @@ import org.easygroup.easytaxi.domain.Rider;
 
 import java.util.Objects;
 
-public class BookingService {
+public class BookRideUseCase {
 
     public Booking bookRide(Driver driver, Rider rider, Journey journey) {
 

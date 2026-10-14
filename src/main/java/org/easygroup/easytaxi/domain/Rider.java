@@ -20,4 +20,13 @@ public class Rider {
     public void bookRide(Booking currentRide) {
         this.currentRide = currentRide;
     }
+
+    public void cancelCurrentRide(){
+        this.currentRide = null;
+    }
+    public void pay(double amount){
+        if(this.money - amount >= 0 ) {
+            this.money -= amount;
+        }
+    }
 }

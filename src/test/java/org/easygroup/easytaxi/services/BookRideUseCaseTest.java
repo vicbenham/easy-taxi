@@ -5,20 +5,18 @@ import org.easygroup.easytaxi.domain.Journey;
 import org.easygroup.easytaxi.domain.Rider;
 import org.junit.jupiter.api.Test;
 
-import java.awt.print.Book;
-
 import static org.junit.jupiter.api.Assertions.*;
 
-class BookingServiceTest {
+class BookRideUseCaseTest {
 
-    BookingService bookingService = new BookingService();
+    BookRideUseCase bookRideUseCase = new BookRideUseCase();
     @Test
     void basicTest(){
         assertTrue(true);
     }
    @Test
     void riderShouldHaveEnoughMoney(){
-        Booking booking = bookingService.bookRide(
+        Booking booking = bookRideUseCase.bookRide(
                 createDriver(true),
                 createRider(100),
                 createJourney("VIERZON", "PARIS", 40.00));
@@ -26,7 +24,7 @@ class BookingServiceTest {
    }
     @Test
     void riderShouldNotHaveEnoughMoney(){
-        Booking booking = bookingService.bookRide(
+        Booking booking = bookRideUseCase.bookRide(
                 createDriver(true),
                 createRider(20),
                 createJourney("ROUBAIX", "PARIS", 100.00));
@@ -35,7 +33,7 @@ class BookingServiceTest {
 
     @Test
     void driverShouldBeAvailable(){
-        Booking booking = bookingService.bookRide(
+        Booking booking = bookRideUseCase.bookRide(
                 createDriver(true),
                 createRider(100.0),
                 createJourney("LE HAVRE", "PARIS", 5.00));
@@ -45,7 +43,7 @@ class BookingServiceTest {
     @Test
     void driverShouldNotBeAvailable(){
         assertThrows(RuntimeException.class, () -> {
-            bookingService.bookRide(
+            bookRideUseCase.bookRide(
                     createDriver(false),
                     createRider(100.0),
                     createJourney("SARTROUVILLE", "PARIS", 50.00));
@@ -55,7 +53,7 @@ class BookingServiceTest {
     @Test
     void bookingShouldBeCanceledBeforeRebooking(){
         Rider rider = createRider(20);
-        Booking booking = bookingService.bookRide(
+        Booking booking = bookRideUseCase.bookRide(
                 createDriver(true),
                 rider,
                 createJourney("CORBEIL-ESSONNES", "PARIS", 5.00));
@@ -63,7 +61,7 @@ class BookingServiceTest {
         rider.bookRide(booking);
 
         assertThrows(RuntimeException.class, () -> {
-            bookingService.bookRide(
+            bookRideUseCase.bookRide(
                     createDriver(true),
                     rider,
                     createJourney("JUVISY-SUR-ORGE", "PARIS", 8.00));
@@ -72,7 +70,7 @@ class BookingServiceTest {
 
     @Test
     void parisianJourneyShouldCost2MoreEuros() {
-        Booking booking = bookingService.bookRide(
+        Booking booking = bookRideUseCase.bookRide(
                 createDriver(true),
                 createRider(100),
                 createJourney("PARIS", "PARIS", 10.00));
@@ -82,7 +80,7 @@ class BookingServiceTest {
 
     @Test
     void parisianToExtJourneyShouldCost10MoreEuros() {
-        Booking booking = bookingService.bookRide(
+        Booking booking = bookRideUseCase.bookRide(
                 createDriver(true),
                 createRider(200),
                 createJourney("PARIS", "LIVRY-GARGAN", 30.00));
