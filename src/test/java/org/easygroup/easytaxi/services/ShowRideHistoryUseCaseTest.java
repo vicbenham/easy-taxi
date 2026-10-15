@@ -1,86 +1,105 @@
 package org.easygroup.easytaxi.services;
 
-import org.easygroup.easytaxi.domain.*;
+import org.easygroup.easytaxi.domain.BookingStatus;
+import org.easygroup.easytaxi.domain.Booking;
+import org.easygroup.easytaxi.persistence.entity.BookingEntity;
+import org.easygroup.easytaxi.persistence.entity.DriverEntity;
+import org.easygroup.easytaxi.persistence.entity.JourneyEntity;
+import org.easygroup.easytaxi.persistence.entity.RiderEntity;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
+import org.springframework.context.annotation.Import;
 
+import jakarta.persistence.EntityManager;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
 
+@DataJpaTest(properties = {
+        "spring.jpa.hibernate.ddl-auto=create-drop",
+        "spring.liquibase.enabled=false"
+})
+@Import({ShowRideHistoryUseCase.class, BookRideUseCase.class, BookingPersistenceService.class})
 class ShowRideHistoryUseCaseTest {
 
-    private final ShowRideHistoryUseCase showRideHistoryUseCase = new ShowRideHistoryUseCase();
-    private final BookRideUseCase bookRideUseCase = new BookRideUseCase();
+    @Autowired
+    private ShowRideHistoryUseCase showRideHistoryUseCase;
+
+    @Autowired
+    private EntityManager entityManager;
+
+    @Autowired
+    private BookRideUseCase bookRideUseCase;
 
     @Test
-    void shouldReturnEmptyHistory() {
-        Rider rider = createRider();
+    void shouldReturnEmptyHistoryWhenRiderHasNoBookings() {
+        RiderEntity rider = saveRider();
+
         assertEquals(List.of(), showRideHistoryUseCase.showRiderHistory(rider));
     }
-    @Test
-    void shouldReturnCompletedRide() {
-        Rider rider = createRider();
-        Driver driver = new Driver(true, "toto");
-        Booking booking = bookRideUseCase.bookRide(
-                driver,
-                rider,
-                new Journey("LE HAVRE", "PARIS", 10.00, LocalDate.parse("2025-10-15")),
-                BookingStatus.IN_PROGRESS);
-        rider.bookRide(booking);
-
-        assertEquals(List.of(), showRideHistoryUseCase.showRiderHistory(rider));
-
-        rider.completeCurrentRide();
-
-        List<Booking> history = showRideHistoryUseCase.showRiderHistory(rider);
-
-        assertEquals(List.of(booking), history);
-        assertEquals(BookingStatus.COMPLETED, booking.getStatus());
-        assertNull(rider.getCurrentRide());
-    }
 
     @Test
-    void shouldReturnAllRidesWithTheirAssignedDrivers() {
-        Rider rider = createRider();
-        Driver firstDriver = createDriver(true, "toto");
-        Booking firstBooking = bookRideUseCase.bookRide(
-                firstDriver,
-                rider,
-                new Journey("LE HAVRE", "PARIS", 10.00, LocalDate.parse("2024-10-15")),
-                BookingStatus.IN_PROGRESS);
-        rider.bookRide(firstBooking);
-        rider.completeCurrentRide();
+    void shouldReturnRidersCompletedBookingsWithTheirDrivers() {
+        RiderEntity rider = saveRider();
+        RiderEntity anotherRider = saveRider();
+        DriverEntity firstDriver = saveDriver("toto");
+        DriverEntity secondDriver = saveDriver("tata");
+        JourneyEntity firstJourney = saveJourney("LE HAVRE", "PARIS", "2024-10-15");
+        JourneyEntity secondJourney = saveJourney("PARIS", "LYON", "2025-01-20");
+        JourneyEntity anotherJourney = saveJourney("LILLE", "PARIS", "2025-02-01");
 
-        Driver secondDriver = createDriver(true, "tata");
-        Booking secondBooking = bookRideUseCase.bookRide(
-                secondDriver,
-                rider,
-                new Journey("PARIS", "LYON", 20.00, LocalDate.now()),
-                BookingStatus.IN_PROGRESS);
-        rider.bookRide(secondBooking);
-        rider.completeCurrentRide();
+        BookingEntity firstBooking = bookRideUseCase.bookRide(
+                rider.getId(), firstDriver.getId(), firstJourney.getId(), BookingStatus.COMPLETED, new BigDecimal("10.00"));
+        BookingEntity secondBooking = bookRideUseCase.bookRide(
+                rider.getId(), secondDriver.getId(), secondJourney.getId(), BookingStatus.COMPLETED, new BigDecimal("15.00"));
+        bookRideUseCase.bookRide(
+                anotherRider.getId(), saveDriver("outside").getId(),
+                anotherJourney.getId(), BookingStatus.COMPLETED, new BigDecimal("20.00"));
 
-        List<Booking> history = showRideHistoryUseCase.showRiderHistory(rider);
+        List<BookingEntity> history = showRideHistoryUseCase.showRiderHistory(rider);
 
-        assertEquals(List.of(firstBooking, secondBooking), history);
-        assertSame(firstDriver, history.get(0).getDriver());
-        assertSame(secondDriver, history.get(1).getDriver());
-        assertEquals("toto", history.get(0).getDriver().getUserName());
-        assertEquals("tata", history.get(1).getDriver().getUserName());
+        assertEquals(List.of(firstBooking.getPrice(), secondBooking.getPrice()),
+                history.stream().map(BookingEntity::getPrice).toList());
+        assertEquals(2, history.size());
+        assertEquals(List.of("toto", "tata"),
+                history.stream().map(booking -> booking.getDriver().getUserName()).toList());
+        assertEquals(List.of(BookingStatus.COMPLETED, BookingStatus.COMPLETED),
+                history.stream().map(BookingEntity::getStatus).toList());
+        assertEquals(List.of("LE HAVRE", "PARIS"),
+                history.stream().map(booking -> booking.getJourney().getDeparture()).toList());
+        assertEquals(List.of("PARIS", "LYON"),
+                history.stream().map(booking -> booking.getJourney().getArrival()).toList());
     }
 
-
-    // HELPERS
-    private Rider createRider() {
-        return new Rider(100.00, LocalDate.of(1990, 1, 1));
+    private RiderEntity saveRider() {
+        return persist(RiderEntity.builder()
+                .money(new BigDecimal("100.00"))
+                .birthDate(LocalDate.of(1990, 1, 1))
+                .build());
     }
 
-    private Driver createDriver(boolean available, String userName){
-        return new Driver(available, userName);
+    private DriverEntity saveDriver(String userName) {
+        return persist(DriverEntity.builder()
+                .available(true)
+                .userName(userName)
+                .build());
     }
 
+    private JourneyEntity saveJourney(String departure, String arrival, String date) {
+        return persist(JourneyEntity.builder()
+                .departure(departure)
+                .arrival(arrival)
+                .kilometers(new BigDecimal("10.00"))
+                .dateRide(LocalDate.parse(date))
+                .build());
+    }
 
+    private <T> T persist(T entity) {
+        entityManager.persist(entity);
+        entityManager.flush();
+        return entity;
+    }
 }
