@@ -1,5 +1,8 @@
 package org.easygroup.easytaxi.services;
 
+import org.springframework.stereotype.Service;
+
+@Service
 public class RawPriceUseCase {
 
     private final Geocoder geocoder;
