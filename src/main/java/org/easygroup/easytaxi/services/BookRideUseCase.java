@@ -5,6 +5,7 @@ import org.easygroup.easytaxi.domain.Driver;
 import org.easygroup.easytaxi.domain.Journey;
 import org.easygroup.easytaxi.domain.Rider;
 import org.easygroup.easytaxi.domain.ServiceType;
+import org.easygroup.easytaxi.exceptions.EasyTaxiException;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
@@ -23,8 +24,12 @@ public class BookRideUseCase {
     }
 
     public Booking bookRide(Driver driver, Rider rider, Journey journey, ServiceType serviceType) {
-        if(Objects.nonNull(rider.getCurrentRide())) throw new RuntimeException();
-        if(!driver.isAvailable()) throw new RuntimeException();
+        if (Objects.nonNull(rider.getCurrentRide())) {
+            throw new EasyTaxiException("Rider already has an active ride");
+        }
+        if (!driver.isAvailable()) {
+            throw new EasyTaxiException("Driver is not available");
+        }
 
         double price = pricingUseCase.calculatePrice(
                 journey.calculatePrice(), serviceType, rider.getBirthDate());
