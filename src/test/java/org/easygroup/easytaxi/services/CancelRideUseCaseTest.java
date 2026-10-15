@@ -18,7 +18,9 @@ import static org.junit.jupiter.api.Assertions.*;
 class CancelRideUseCaseTest {
 
     BookRideUseCase bookRideUseCase = new BookRideUseCase(
-            new PricingUseCase(Clock.systemUTC(), List.of(new ChristmasPricingUseCase())));
+            new PricingUseCase(Clock.systemUTC(), List.of(
+                    new UberXPricingUseCase(),
+                    new ChristmasPricingUseCase())));
 
     CancelRideUseCase cancelRideUseCase = new CancelRideUseCase();
 

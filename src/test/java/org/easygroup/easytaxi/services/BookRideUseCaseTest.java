@@ -3,6 +3,7 @@ import org.easygroup.easytaxi.domain.Booking;
 import org.easygroup.easytaxi.domain.Driver;
 import org.easygroup.easytaxi.domain.Journey;
 import org.easygroup.easytaxi.domain.Rider;
+import org.easygroup.easytaxi.domain.ServiceType;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
@@ -38,7 +39,9 @@ class BookRideUseCaseTest {
     }
 
     private PricingUseCase createPricingUseCase(Clock clock) {
-        return new PricingUseCase(clock, List.of(new ChristmasPricingUseCase()));
+        return new PricingUseCase(clock, List.of(
+                new UberXPricingUseCase(),
+                new ChristmasPricingUseCase()));
     }
 
     @Test
@@ -108,6 +111,30 @@ class BookRideUseCaseTest {
     void rideOutsideChristmasPeriodShouldKeepItsRegularPrice() {
         assertEquals(7.0, bookRideAt("2026-12-24T17:59:59Z").getPrice());
         assertEquals(7.0, bookRideAt("2026-12-26T00:00:00Z").getPrice());
+    }
+
+    @Test
+    void uberXCostsFiveEurosMoreExceptOnTheRidersBirthday() {
+        assertEquals(12.0, bookRide(
+                LocalDate.of(1990, 1, 1), ServiceType.UBER_X).getPrice());
+        assertEquals(7.0, bookRide(
+                LocalDate.of(1990, 1, 2), ServiceType.UBER_X).getPrice());
+    }
+
+    @Test
+    void standardServiceDoesNotHaveTheUberXFee() {
+        assertEquals(7.0, bookRide(
+                LocalDate.of(1990, 1, 1), ServiceType.STANDARD).getPrice());
+    }
+
+    private Booking bookRide(LocalDate birthDate, ServiceType serviceType) {
+        BookRideUseCase useCase = new BookRideUseCase(createPricingUseCase(Clock.fixed(
+                Instant.parse("2026-01-02T10:00:00Z"), ZoneId.of("UTC"))));
+        return useCase.bookRide(
+                createDriver(true),
+                new Rider(100, birthDate),
+                createJourney("PARIS", "PARIS", 10.00),
+                serviceType);
     }
 
     private Booking bookRideAt(String instant) {

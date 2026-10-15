@@ -52,7 +52,9 @@ class RawPriceUseCaseTest {
     }
 
     private PricingUseCase createPricingUseCase(Clock clock) {
-        return new PricingUseCase(clock, List.of(new ChristmasPricingUseCase()));
+        return new PricingUseCase(clock, List.of(
+                new UberXPricingUseCase(),
+                new ChristmasPricingUseCase()));
     }
 
     private static Stream<Arguments> provideParams() {
