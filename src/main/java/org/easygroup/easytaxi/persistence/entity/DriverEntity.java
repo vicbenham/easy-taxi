@@ -1,4 +1,4 @@
-package org.easygroup.easytaxi.infrastructure.entity;
+package org.easygroup.easytaxi.persistence.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -11,27 +11,19 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
-
 @Entity
-@Table(name = "journeys")
+@Table(name = "drivers")
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class JourneyEntity {
+public class DriverEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)
-    private String departure;
-
-    @Column(nullable = false)
-    private String arrival;
-
-    @Column(nullable = false, precision = 8, scale = 2)
-    private BigDecimal kilometers;
+    private boolean available = true;
 
 }
