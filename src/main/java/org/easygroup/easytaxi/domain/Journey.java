@@ -25,4 +25,16 @@ public class Journey {
 
         return basePrice;
     }
+
+    public String getDeparture() {
+        return departure;
+    }
+
+    public String getArrival() {
+        return arrival;
+    }
+
+    public Double getKilometers() {
+        return kilometers;
+    }
 }

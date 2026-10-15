@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/rides")
+@RequestMapping({"/api/rides", "/rides"})
 public class RideEstimateController {
 
     private final RideEstimateUseCase rideEstimateUseCase;

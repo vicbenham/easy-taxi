@@ -1,5 +1,9 @@
 package org.easygroup.easytaxi.exposition;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.PositiveOrZero;
 import org.easygroup.easytaxi.domain.Booking;
 import org.easygroup.easytaxi.domain.Driver;
 import org.easygroup.easytaxi.domain.Journey;
@@ -7,9 +11,8 @@ import org.easygroup.easytaxi.domain.Rider;
 import org.easygroup.easytaxi.domain.ServiceType;
 import org.easygroup.easytaxi.services.BookRideUseCase;
 import org.easygroup.easytaxi.services.RideEstimateUseCase;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.AssertTrue;
-import jakarta.validation.constraints.PositiveOrZero;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDate;
 
 @RestController
-@RequestMapping("/api/rides")
+@RequestMapping({"/api/rides", "/rides"})
 public class BookRideController {
 
     private final BookRideUseCase bookRideUseCase;
@@ -30,17 +33,18 @@ public class BookRideController {
     }
 
     @PostMapping("/book")
-    public BookingResponse bookRide(@Valid @RequestBody BookRideRequest request) {
+    public ResponseEntity<BookingResponse> bookRide(@Valid @RequestBody BookRideRequest request) {
         if (request.token() != null) {
-            Booking booking = rideEstimateUseCase.book(request.token());
-            return new BookingResponse(booking.getPrice());
+            RideEstimateUseCase.BookedRide booking = rideEstimateUseCase.book(request.token());
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(new BookingResponse(booking.id(), booking.price()));
         }
         Booking booking = bookRideUseCase.bookRide(
                 new Driver(request.driverAvailable()),
                 new Rider(request.riderMoney(), request.riderBirthDate()),
                 new Journey(request.departure(), request.arrival(), request.kilometers()),
                 request.serviceType());
-        return new BookingResponse(booking.getPrice());
+        return ResponseEntity.ok(new BookingResponse(null, booking.getPrice()));
     }
 
     public record BookRideRequest(
@@ -48,7 +52,9 @@ public class BookRideController {
             Double riderMoney,
             LocalDate riderBirthDate,
             Boolean driverAvailable,
+            @JsonAlias("from")
             String departure,
+            @JsonAlias("to")
             String arrival,
             @PositiveOrZero
             Double kilometers,
@@ -77,6 +83,6 @@ public class BookRideController {
         }
     }
 
-    public record BookingResponse(Double price) {
+    public record BookingResponse(Long id, Double price) {
     }
 }

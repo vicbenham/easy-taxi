@@ -24,11 +24,13 @@ public class RideEstimateUseCase {
 
     private final BookRideUseCase bookRideUseCase;
     private final Clock clock;
+    private final RidePersister ridePersister;
     private final ConcurrentMap<String, StoredEstimate> estimates = new ConcurrentHashMap<>();
 
-    public RideEstimateUseCase(BookRideUseCase bookRideUseCase, Clock clock) {
+    public RideEstimateUseCase(BookRideUseCase bookRideUseCase, Clock clock, RidePersister ridePersister) {
         this.bookRideUseCase = bookRideUseCase;
         this.clock = clock;
+        this.ridePersister = ridePersister;
     }
 
     public PriceEstimate estimate(Driver driver, Rider rider, Journey journey, ServiceType serviceType) {
@@ -39,28 +41,33 @@ public class RideEstimateUseCase {
         return new PriceEstimate(price, token, expiresAt);
     }
 
-    public Booking book(String token) {
+    public BookedRide book(String token) {
         StoredEstimate estimate = estimates.get(token);
         if (estimate == null) {
             throw new EstimateNotFoundException();
         }
 
         synchronized (estimate) {
-            if (!clock.instant().isBefore(estimate.expiresAt)) {
-                throw new EstimateExpiredException();
-            }
             if (estimate.used) {
                 throw new EstimateAlreadyUsedException();
+            }
+            if (!clock.instant().isBefore(estimate.expiresAt)) {
+                throw new EstimateExpiredException();
             }
 
             Booking booking = bookRideUseCase.bookRideAtPrice(
                     estimate.driver, estimate.rider, estimate.journey, estimate.price);
+            Long rideId = ridePersister.persist(
+                    booking, estimate.driver, estimate.rider, estimate.journey);
             estimate.used = true;
-            return booking;
+            return new BookedRide(rideId, booking.getPrice());
         }
     }
 
     public record PriceEstimate(double price, String token, Instant expiresAt) {
+    }
+
+    public record BookedRide(Long id, double price) {
     }
 
     private static final class StoredEstimate {

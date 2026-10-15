@@ -8,16 +8,24 @@ import org.easygroup.easytaxi.persistence.entity.DriverEntity;
 import org.easygroup.easytaxi.persistence.entity.JourneyEntity;
 import org.easygroup.easytaxi.persistence.entity.RiderEntity;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -36,6 +44,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
+@Import(RideApiIntegrationTest.TestClockConfiguration.class)
 class RideApiIntegrationTest {
 
     @Autowired
@@ -43,6 +52,14 @@ class RideApiIntegrationTest {
 
     @PersistenceContext
     private EntityManager entityManager;
+
+    @Autowired
+    private MutableClock clock;
+
+    @BeforeEach
+    void resetClock() {
+        clock.reset(Instant.parse("2026-06-01T12:00:00Z"));
+    }
 
     @Test
     void bookingEndpointUsesTheBookingAndPricingUseCases() throws Exception {
@@ -127,8 +144,138 @@ class RideApiIntegrationTest {
         mockMvc.perform(post("/api/rides/book")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"token\":\"%s\"}".formatted(token)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.price").value(12.0));
+    }
+
+    @Test
+    void publicEstimateAndBookRoutesAcceptFromAndToAndPersistTheRide() throws Exception {
+        long initialBookingCount = entityManager.createQuery(
+                "select count(booking) from BookingEntity booking", Long.class).getSingleResult();
+
+        String response = mockMvc.perform(post("/rides/estimate")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "riderMoney": 100.0,
+                                  "riderBirthDate": "1990-01-01",
+                                  "driverAvailable": true,
+                                  "from": "PARIS",
+                                  "to": "PARIS",
+                                  "kilometers": 10.0,
+                                  "serviceType": "UBER_X"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.price").value(12.0))
+                .andExpect(jsonPath("$.token").isNotEmpty())
+                .andExpect(jsonPath("$.expiresAt").isNotEmpty())
+                .andReturn().getResponse().getContentAsString();
+        String token = JsonPath.read(response, "$.token");
+        String expiresAt = JsonPath.read(response, "$.expiresAt");
+        assertEquals(clock.instant().plusSeconds(300), Instant.parse(expiresAt));
+
+        assertEquals(initialBookingCount, entityManager.createQuery(
+                "select count(booking) from BookingEntity booking", Long.class).getSingleResult());
+
+        String bookingResponse = mockMvc.perform(post("/rides/book")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"token\":\"%s\"}".formatted(token)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").isNotEmpty())
+                .andExpect(jsonPath("$.price").value(12.0))
+                .andReturn().getResponse().getContentAsString();
+        Number bookingIdentifier = JsonPath.read(bookingResponse, "$.id");
+        Long bookingId = bookingIdentifier.longValue();
+        BookingEntity savedBooking = entityManager.find(BookingEntity.class, bookingId);
+        assertEquals(BigDecimal.valueOf(12.0), savedBooking.getPrice());
+
+        assertEquals(initialBookingCount + 1, entityManager.createQuery(
+                "select count(booking) from BookingEntity booking", Long.class).getSingleResult());
+    }
+
+    @Test
+    void bookEndpointReturns404409And410ForInvalidUsedAndExpiredTokens() throws Exception {
+        mockMvc.perform(post("/rides/book")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"token\":\"unknown-token\"}"))
+                .andExpect(status().isNotFound());
+
+        String response = mockMvc.perform(post("/rides/estimate")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(estimateRequest()))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        String usedToken = JsonPath.read(response, "$.token");
+
+        mockMvc.perform(post("/rides/book")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"token\":\"%s\"}".formatted(usedToken)))
+                .andExpect(status().isCreated());
+        mockMvc.perform(post("/rides/book")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"token\":\"%s\"}".formatted(usedToken)))
+                .andExpect(status().isConflict());
+
+        String expiringResponse = mockMvc.perform(post("/rides/estimate")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(estimateRequest()))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        String expiringToken = JsonPath.read(expiringResponse, "$.token");
+        clock.advanceSeconds(300);
+
+        mockMvc.perform(post("/rides/book")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"token\":\"%s\"}".formatted(expiringToken)))
+                .andExpect(status().isGone());
+    }
+
+    private String estimateRequest() {
+        return """
+                {
+                  "riderMoney": 100.0,
+                  "riderBirthDate": "1990-01-01",
+                  "driverAvailable": true,
+                  "from": "PARIS",
+                  "to": "PARIS",
+                  "kilometers": 10.0,
+                  "serviceType": "UBER_X"
+                }
+                """;
+    }
+
+    @Test
+    void estimateRequiresFromAndTo() throws Exception {
+        String requestWithoutFrom = """
+                {
+                  "riderMoney": 100.0,
+                  "riderBirthDate": "1990-01-01",
+                  "driverAvailable": true,
+                  "to": "PARIS",
+                  "kilometers": 10.0,
+                  "serviceType": "STANDARD"
+                }
+                """;
+        mockMvc.perform(post("/rides/estimate")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestWithoutFrom))
+                .andExpect(status().isBadRequest());
+
+        String requestWithoutTo = """
+                {
+                  "riderMoney": 100.0,
+                  "riderBirthDate": "1990-01-01",
+                  "driverAvailable": true,
+                  "from": "PARIS",
+                  "kilometers": 10.0,
+                  "serviceType": "STANDARD"
+                }
+                """;
+        mockMvc.perform(post("/rides/estimate")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestWithoutTo))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -160,5 +307,47 @@ class RideApiIntegrationTest {
                 .andExpect(jsonPath("$[0].driver.id").value(driver.getId()))
                 .andExpect(jsonPath("$[0].journey.departure").value("PARIS"))
                 .andExpect(jsonPath("$[0].journey.arrival").value("LYON"));
+    }
+
+    @TestConfiguration
+    static class TestClockConfiguration {
+
+        @Bean
+        @Primary
+        MutableClock testClock() {
+            return new MutableClock(Instant.parse("2026-06-01T12:00:00Z"));
+        }
+    }
+
+    static class MutableClock extends Clock {
+
+        private Instant instant;
+
+        MutableClock(Instant instant) {
+            this.instant = instant;
+        }
+
+        void advanceSeconds(long seconds) {
+            instant = instant.plusSeconds(seconds);
+        }
+
+        void reset(Instant instant) {
+            this.instant = instant;
+        }
+
+        @Override
+        public ZoneId getZone() {
+            return ZoneId.of("UTC");
+        }
+
+        @Override
+        public Clock withZone(ZoneId zone) {
+            return this;
+        }
+
+        @Override
+        public Instant instant() {
+            return instant;
+        }
     }
 }

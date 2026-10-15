@@ -1,6 +1,5 @@
 package org.easygroup.easytaxi.services;
 
-import org.easygroup.easytaxi.domain.Booking;
 import org.easygroup.easytaxi.domain.Driver;
 import org.easygroup.easytaxi.domain.Journey;
 import org.easygroup.easytaxi.domain.Rider;
@@ -18,6 +17,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
 
 class RideEstimateUseCaseTest {
 
@@ -27,7 +27,8 @@ class RideEstimateUseCaseTest {
             new ChristmasPricingUseCase(),
             new PeakHoursPricingUseCase()));
     private final BookRideUseCase bookRideUseCase = new BookRideUseCase(pricingUseCase);
-    private final RideEstimateUseCase useCase = new RideEstimateUseCase(bookRideUseCase, clock);
+    private final RideEstimateUseCase useCase =
+            new RideEstimateUseCase(bookRideUseCase, clock, mock(RidePersister.class));
 
     @Test
     void estimatesWithoutBookingAndBooksAtTheGuaranteedPrice() {
@@ -39,10 +40,10 @@ class RideEstimateUseCaseTest {
 
         clock.advanceSeconds(60);
 
-        Booking booking = useCase.book(estimate.token());
+        RideEstimateUseCase.BookedRide booking = useCase.book(estimate.token());
 
         assertEquals(12.0, estimate.price());
-        assertEquals(12.0, booking.getPrice());
+        assertEquals(12.0, booking.price());
     }
 
     @Test
@@ -54,7 +55,7 @@ class RideEstimateUseCaseTest {
                 new ChristmasPricingUseCase(),
                 new PeakHoursPricingUseCase()));
         RideEstimateUseCase christmasPeakUseCase = new RideEstimateUseCase(
-                new BookRideUseCase(christmasPeakPricing), christmasPeakClock);
+                new BookRideUseCase(christmasPeakPricing), christmasPeakClock, mock(RidePersister.class));
 
         var estimate = christmasPeakUseCase.estimate(
                 new Driver(1L, true),

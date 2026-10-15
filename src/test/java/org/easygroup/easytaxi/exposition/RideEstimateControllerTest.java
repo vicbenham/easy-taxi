@@ -5,6 +5,7 @@ import org.easygroup.easytaxi.services.ChristmasPricingUseCase;
 import org.easygroup.easytaxi.services.PeakHoursPricingUseCase;
 import org.easygroup.easytaxi.services.PricingUseCase;
 import org.easygroup.easytaxi.services.RideEstimateUseCase;
+import org.easygroup.easytaxi.services.RidePersister;
 import org.easygroup.easytaxi.services.UberXPricingUseCase;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.MockMvc;
@@ -14,6 +15,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.util.List;
 
+import static org.mockito.Mockito.mock;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -43,7 +45,7 @@ class RideEstimateControllerTest {
                         .content("""
                                 {"token":"%s"}
                                 """.formatted(token)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.price").value(12.0));
     }
 
@@ -80,7 +82,7 @@ class RideEstimateControllerTest {
         mockMvc.perform(post("/api/rides/book")
                         .contentType("application/json")
                         .content("{\"token\":\"%s\"}".formatted(token)))
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
         mockMvc.perform(post("/api/rides/book")
                         .contentType("application/json")
                         .content("{\"token\":\"%s\"}".formatted(token)))
@@ -101,7 +103,8 @@ class RideEstimateControllerTest {
     }
 
     private RideEstimateUseCase createUseCase() {
-        return new RideEstimateUseCase(new BookRideUseCase(createPricingUseCase()), clock);
+        return new RideEstimateUseCase(
+                new BookRideUseCase(createPricingUseCase()), clock, mock(RidePersister.class));
     }
 
     private PricingUseCase createPricingUseCase() {
