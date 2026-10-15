@@ -1,14 +1,57 @@
 package org.easygroup.easytaxi.services;
+
 import org.easygroup.easytaxi.domain.*;
+import org.easygroup.easytaxi.persistence.entity.BookingEntity;
+import org.easygroup.easytaxi.persistence.entity.DriverEntity;
+import org.easygroup.easytaxi.persistence.entity.JourneyEntity;
+import org.easygroup.easytaxi.persistence.entity.RiderEntity;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class BookRideUseCaseTest {
 
-    BookRideUseCase bookRideUseCase = new BookRideUseCase();
+    private final BookingPersistenceService bookingPersistenceService = mock(BookingPersistenceService.class);
+    private final BookRideUseCase bookRideUseCase = new BookRideUseCase(bookingPersistenceService);
+
+    @BeforeEach
+    void setUp() {
+        when(bookingPersistenceService.saveBooking(
+                any(Booking.class), any(Rider.class), any(Driver.class), any(Journey.class)))
+                .thenAnswer(invocation -> {
+                    Booking booking = invocation.getArgument(0);
+                    Rider rider = invocation.getArgument(1);
+                    Driver driver = invocation.getArgument(2);
+                    Journey journey = invocation.getArgument(3);
+
+                    return BookingEntity.builder()
+                            .price(BigDecimal.valueOf(booking.getPrice()))
+                            .rider(RiderEntity.builder()
+                                    .money(BigDecimal.valueOf(rider.getMoney()))
+                                    .birthDate(rider.getBirthDate())
+                                    .build())
+                            .driver(DriverEntity.builder()
+                                    .available(driver.isAvailable())
+                                    .userName(driver.getUserName())
+                                    .build())
+                            .journey(JourneyEntity.builder()
+                                    .departure(journey.getDeparture())
+                                    .arrival(journey.getArrival())
+                                    .kilometers(BigDecimal.valueOf(journey.getKilometers()))
+                                    .dateRide(journey.getDateRide())
+                                    .build())
+                            .status(booking.getStatus())
+                            .build();
+                });
+    }
+
     @Test
     void basicTest(){
         assertTrue(true);

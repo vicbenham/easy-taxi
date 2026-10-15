@@ -11,18 +11,12 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class CancelRideUseCaseTest {
 
-    BookRideUseCase bookRideUseCase = new BookRideUseCase();
-
     CancelRideUseCase cancelRideUseCase = new CancelRideUseCase();
 
     @Test
     void riderShouldBeAbleToCancelRide(){
         Rider rider = createRider(100.00);
-        Booking booking = bookRideUseCase.bookRide(
-                createDriver(true, "toto"),
-                rider,
-                createJourney("LE HAVRE", "PARIS", 10.00, LocalDate.now()),
-                BookingStatus.IN_PROGRESS);
+        Booking booking = createBooking();
         rider.bookRide(booking);
         cancelRideUseCase.cancelCurrentRide(rider);
         assertNull(rider.getCurrentRide());
@@ -31,11 +25,7 @@ class CancelRideUseCaseTest {
     @Test
     void riderShouldPay5EurosToCancelRide(){
         Rider rider = createRider(100.00);
-        Booking booking = bookRideUseCase.bookRide(
-                createDriver(true, "toto"),
-                rider,
-                createJourney("LE HAVRE", "PARIS", 10.00, LocalDate.now()),
-                BookingStatus.IN_PROGRESS);
+        Booking booking = createBooking();
         rider.bookRide(booking);
         cancelRideUseCase.cancelCurrentRide(rider);
         assertEquals(95.00, rider.getMoney());
@@ -50,14 +40,18 @@ class CancelRideUseCaseTest {
     @Test
     void riderShouldNotPayCancelPriceIfBirthday(){
         Rider rider = new Rider(100.00, LocalDate.now());
-        Booking booking = bookRideUseCase.bookRide(
-                createDriver(true, "toto"),
-                rider,
-                createJourney("LE HAVRE", "PARIS", 10.00, LocalDate.now()),
-                BookingStatus.IN_PROGRESS);
+        Booking booking = createBooking();
         rider.bookRide(booking);
         cancelRideUseCase.cancelCurrentRide(rider);
         assertEquals(100.00, rider.getMoney());
+    }
+
+    private Booking createBooking() {
+        return new Booking(
+                createJourney("LE HAVRE", "PARIS", 10.00, LocalDate.now()),
+                createDriver(true, "toto"),
+                BookingStatus.IN_PROGRESS,
+                5.00);
     }
 
     // HELPERS

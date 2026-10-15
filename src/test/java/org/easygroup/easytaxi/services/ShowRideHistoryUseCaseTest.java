@@ -1,7 +1,6 @@
 package org.easygroup.easytaxi.services;
 
 import org.easygroup.easytaxi.domain.BookingStatus;
-import org.easygroup.easytaxi.domain.Booking;
 import org.easygroup.easytaxi.persistence.entity.BookingEntity;
 import org.easygroup.easytaxi.persistence.entity.DriverEntity;
 import org.easygroup.easytaxi.persistence.entity.JourneyEntity;
@@ -22,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
         "spring.jpa.hibernate.ddl-auto=create-drop",
         "spring.liquibase.enabled=false"
 })
-@Import({ShowRideHistoryUseCase.class, BookRideUseCase.class, BookingPersistenceService.class})
+@Import(ShowRideHistoryUseCase.class)
 class ShowRideHistoryUseCaseTest {
 
     @Autowired
@@ -30,9 +29,6 @@ class ShowRideHistoryUseCaseTest {
 
     @Autowired
     private EntityManager entityManager;
-
-    @Autowired
-    private BookRideUseCase bookRideUseCase;
 
     @Test
     void shouldReturnEmptyHistoryWhenRiderHasNoBookings() {
@@ -51,13 +47,9 @@ class ShowRideHistoryUseCaseTest {
         JourneyEntity secondJourney = saveJourney("PARIS", "LYON", "2025-01-20");
         JourneyEntity anotherJourney = saveJourney("LILLE", "PARIS", "2025-02-01");
 
-        BookingEntity firstBooking = bookRideUseCase.bookRide(
-                rider.getId(), firstDriver.getId(), firstJourney.getId(), BookingStatus.COMPLETED, new BigDecimal("10.00"));
-        BookingEntity secondBooking = bookRideUseCase.bookRide(
-                rider.getId(), secondDriver.getId(), secondJourney.getId(), BookingStatus.COMPLETED, new BigDecimal("15.00"));
-        bookRideUseCase.bookRide(
-                anotherRider.getId(), saveDriver("outside").getId(),
-                anotherJourney.getId(), BookingStatus.COMPLETED, new BigDecimal("20.00"));
+        BookingEntity firstBooking = saveBooking(rider, firstDriver, firstJourney, BookingStatus.COMPLETED, new BigDecimal("10.00"));
+        BookingEntity secondBooking = saveBooking(rider, secondDriver, secondJourney, BookingStatus.COMPLETED, new BigDecimal("15.00"));
+        saveBooking(anotherRider, saveDriver("outside"), anotherJourney, BookingStatus.COMPLETED, new BigDecimal("20.00"));
 
         List<BookingEntity> history = showRideHistoryUseCase.showRiderHistory(rider);
 
@@ -94,6 +86,21 @@ class ShowRideHistoryUseCaseTest {
                 .arrival(arrival)
                 .kilometers(new BigDecimal("10.00"))
                 .dateRide(LocalDate.parse(date))
+                .build());
+    }
+
+    private BookingEntity saveBooking(
+            RiderEntity rider,
+            DriverEntity driver,
+            JourneyEntity journey,
+            BookingStatus status,
+            BigDecimal price) {
+        return persist(BookingEntity.builder()
+                .rider(rider)
+                .driver(driver)
+                .journey(journey)
+                .status(status)
+                .price(price)
                 .build());
     }
 
