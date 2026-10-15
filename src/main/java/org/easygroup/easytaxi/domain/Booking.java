@@ -10,10 +10,11 @@ public class Booking {
     private final Driver driver;
     private BookingStatus status;
 
-    public Booking(Journey journey, Driver driver, BookingStatus status) {
+    public Booking(Journey journey, Driver driver, BookingStatus status, Double price) {
         this.journey = journey;
         this.driver = driver;
         this.status = status;
+        this.price = price;
     }
 
     public Driver getDriver() {

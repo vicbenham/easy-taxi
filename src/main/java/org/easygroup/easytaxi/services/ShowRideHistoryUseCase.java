@@ -1,13 +1,19 @@
 package org.easygroup.easytaxi.services;
 
-import org.easygroup.easytaxi.domain.Booking;
-import org.easygroup.easytaxi.domain.Rider;
+import org.easygroup.easytaxi.persistence.entity.BookingEntity;
+import org.easygroup.easytaxi.persistence.entity.RiderEntity;
+import org.easygroup.easytaxi.persistence.repository.BookingRepository;
 
 import java.util.List;
 
 public class ShowRideHistoryUseCase {
+    private final BookingRepository bookingRepository;
 
-    public List<Booking> showRiderHistory(Rider rider) {
-        return rider.getRideHistory();
+    public ShowRideHistoryUseCase(BookingRepository bookingRepository) {
+        this.bookingRepository = bookingRepository;
+    }
+
+    public List<BookingEntity> showRiderHistory(RiderEntity rider) {
+        return bookingRepository.findAllByRider(rider);
     }
 }

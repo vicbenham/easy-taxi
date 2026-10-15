@@ -1,0 +1,42 @@
+databaseChangeLog:
+  - changeSet:
+      id: 005-add-driver-user-name
+      author: easy-taxi
+      context: dev,prod
+      changes:
+        - addColumn:
+            tableName: drivers
+            columns:
+              - column:
+                  name: user_name
+                  type: VARCHAR(255)
+                  defaultValue: unknown
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 006-add-journey-ride-date
+      author: easy-taxi
+      context: dev,prod
+      changes:
+        - addColumn:
+            tableName: journeys
+            columns:
+              - column:
+                  name: date_ride
+                  type: DATE
+
+  - changeSet:
+      id: 007-add-booking-status
+      author: easy-taxi
+      context: dev,prod
+      changes:
+        - addColumn:
+            tableName: bookings
+            columns:
+              - column:
+                  name: status
+                  type: VARCHAR(32)
+                  defaultValue: IN_PROGRESS
+                  constraints:
+                    nullable: false
