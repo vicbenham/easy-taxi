@@ -1,11 +1,15 @@
 package org.easygroup.easytaxi.domain;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 public class Rider {
     private double money;
     private Booking currentRide;
     private LocalDate birthDate;
+    private final List<Booking> rideHistory = new ArrayList<>();
 
     public Rider(double money, LocalDate birthDate) {
         this.money = money;
@@ -24,8 +28,22 @@ public class Rider {
         return currentRide;
     }
 
+    public List<Booking> getRideHistory() {
+        return List.copyOf(rideHistory);
+    }
+
     public void bookRide(Booking currentRide) {
         this.currentRide = currentRide;
+    }
+
+    public void completeCurrentRide() {
+        if (Objects.isNull(currentRide)) {
+            throw new IllegalStateException("There is no ride to complete");
+        }
+
+        currentRide.complete();
+        rideHistory.add(currentRide);
+        currentRide = null;
     }
 
     public void cancelCurrentRide(){

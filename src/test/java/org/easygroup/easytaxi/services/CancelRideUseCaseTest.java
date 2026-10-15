@@ -1,12 +1,8 @@
 package org.easygroup.easytaxi.services;
 
-import org.easygroup.easytaxi.domain.Booking;
-import org.easygroup.easytaxi.domain.Driver;
-import org.easygroup.easytaxi.domain.Journey;
-import org.easygroup.easytaxi.domain.Rider;
+import org.easygroup.easytaxi.domain.*;
 import org.easygroup.easytaxi.exceptions.EasyTaxiException;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestClassOrder;
 
 import java.time.LocalDate;
 
@@ -23,9 +19,10 @@ class CancelRideUseCaseTest {
     void riderShouldBeAbleToCancelRide(){
         Rider rider = createRider(100.00);
         Booking booking = bookRideUseCase.bookRide(
-                createDriver(true),
+                createDriver(true, "toto"),
                 rider,
-                createJourney("LE HAVRE", "PARIS", 10.00));
+                createJourney("LE HAVRE", "PARIS", 10.00, LocalDate.now()),
+                BookingStatus.IN_PROGRESS);
         rider.bookRide(booking);
         cancelRideUseCase.cancelCurrentRide(rider);
         assertNull(rider.getCurrentRide());
@@ -35,9 +32,10 @@ class CancelRideUseCaseTest {
     void riderShouldPay5EurosToCancelRide(){
         Rider rider = createRider(100.00);
         Booking booking = bookRideUseCase.bookRide(
-                createDriver(true),
+                createDriver(true, "toto"),
                 rider,
-                createJourney("LE HAVRE", "PARIS", 10.00));
+                createJourney("LE HAVRE", "PARIS", 10.00, LocalDate.now()),
+                BookingStatus.IN_PROGRESS);
         rider.bookRide(booking);
         cancelRideUseCase.cancelCurrentRide(rider);
         assertEquals(95.00, rider.getMoney());
@@ -53,9 +51,10 @@ class CancelRideUseCaseTest {
     void riderShouldNotPayCancelPriceIfBirthday(){
         Rider rider = new Rider(100.00, LocalDate.now());
         Booking booking = bookRideUseCase.bookRide(
-                createDriver(true),
+                createDriver(true, "toto"),
                 rider,
-                createJourney("LE HAVRE", "PARIS", 10.00));
+                createJourney("LE HAVRE", "PARIS", 10.00, LocalDate.now()),
+                BookingStatus.IN_PROGRESS);
         rider.bookRide(booking);
         cancelRideUseCase.cancelCurrentRide(rider);
         assertEquals(100.00, rider.getMoney());
@@ -66,12 +65,12 @@ class CancelRideUseCaseTest {
         return new Rider(money, LocalDate.of(1990, 1, 1));
     }
 
-    private Driver createDriver(boolean available){
-        return new Driver(available);
+    private Driver createDriver(boolean available, String userName){
+        return new Driver(available, userName);
     }
 
-    private Journey createJourney(String dep, String arr, double km) {
-        return new Journey(dep, arr, km);
+    private Journey createJourney(String dep, String arr, double km, LocalDate dateRide) {
+        return new Journey(dep, arr, km, dateRide);
     }
 
 }

@@ -1,5 +1,7 @@
 package org.easygroup.easytaxi.domain;
 
+import java.time.LocalDate;
+
 public class Journey {
 
     private final static Double PRICE_PER_KILOMETER = 0.5;
@@ -9,11 +11,13 @@ public class Journey {
 
     //TO DELETE
     private final Double kilometers;
+    private final LocalDate dateRide;
 
-    public Journey(String departure, String arrival, Double kilometers) {
+    public Journey(String departure, String arrival, Double kilometers, LocalDate dateRide) {
         this.departure = departure;
         this.arrival = arrival;
         this.kilometers = kilometers;
+        this.dateRide = dateRide;
     }
 
     public Double calculatePrice() {
