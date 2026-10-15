@@ -27,6 +27,9 @@ public class BookRideUseCase {
         if (Objects.nonNull(rider.getCurrentRide())) {
             throw new EasyTaxiException("Rider already has an active ride");
         }
+        if (rider.isDriverBlocked(driver)) {
+            throw new EasyTaxiException("Driver is blocked by this rider");
+        }
         if (!driver.isAvailable()) {
             throw new EasyTaxiException("Driver is not available");
         }

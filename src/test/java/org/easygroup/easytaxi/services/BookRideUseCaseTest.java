@@ -64,6 +64,17 @@ class BookRideUseCaseTest {
     }
 
     @Test
+    void blockedDriverCannotBeBookedByTheRider() {
+        Rider rider = createRider(100.0);
+        rider.blockDriver(new Driver(12L, true));
+
+        assertThrows(RuntimeException.class, () -> bookRideUseCase.bookRide(
+                new Driver(12L, true),
+                rider,
+                createJourney("PARIS", "LYON", 10.0)));
+    }
+
+    @Test
     void bookingShouldBeCanceledBeforeRebooking(){
         Rider rider = createRider(20);
         Booking booking = bookRideUseCase.bookRide(
