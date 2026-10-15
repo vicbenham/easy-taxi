@@ -1,11 +1,19 @@
 package org.easygroup.easytaxi.domain;
 
+import org.easygroup.easytaxi.exceptions.EasyTaxiException;
+
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 
 public class Rider {
+    private static final int MAX_BLOCKED_DRIVERS = 3;
+
     private double money;
     private Booking currentRide;
     private LocalDate birthDate;
+    private final Set<Long> blockedDriverIds = new HashSet<>();
 
     public Rider(double money, LocalDate birthDate) {
         this.money = money;
@@ -22,6 +30,27 @@ public class Rider {
 
     public Booking getCurrentRide() {
         return currentRide;
+    }
+
+    public void blockDriver(Driver driver) {
+        Objects.requireNonNull(driver, "Driver must not be null");
+        if (blockedDriverIds.contains(driver.getId())) {
+            return;
+        }
+        if (blockedDriverIds.size() >= MAX_BLOCKED_DRIVERS) {
+            throw new EasyTaxiException("A rider cannot block more than three drivers");
+        }
+        blockedDriverIds.add(driver.getId());
+    }
+
+    public void unblockDriver(Driver driver) {
+        Objects.requireNonNull(driver, "Driver must not be null");
+        blockedDriverIds.remove(driver.getId());
+    }
+
+    public boolean isDriverBlocked(Driver driver) {
+        Objects.requireNonNull(driver, "Driver must not be null");
+        return blockedDriverIds.contains(driver.getId());
     }
 
     public void bookRide(Booking currentRide) {

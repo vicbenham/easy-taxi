@@ -19,6 +19,8 @@ target/
 *.iml
 *.ipr
 
+### Remove test
+**/application-test.properties
 ### NetBeans ###
 /nbproject/private/
 /nbbuild/

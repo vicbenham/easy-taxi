@@ -2,6 +2,9 @@ package org.easygroup.easytaxi;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+
+import java.time.Clock;
 
 @SpringBootApplication
 public class EasyTaxiApplication {
@@ -10,4 +13,8 @@ public class EasyTaxiApplication {
         SpringApplication.run(EasyTaxiApplication.class, args);
     }
 
+    @Bean
+    Clock clock() {
+        return Clock.systemDefaultZone();
+    }
 }
