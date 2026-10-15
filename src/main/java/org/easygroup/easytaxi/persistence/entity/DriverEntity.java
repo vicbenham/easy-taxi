@@ -26,4 +26,7 @@ public class DriverEntity {
     @Column(nullable = false)
     private boolean available = true;
 
+    @Column(name = "user_name", nullable = false)
+    private String userName;
+
 }

@@ -12,6 +12,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "journeys")
@@ -33,5 +34,8 @@ public class JourneyEntity {
 
     @Column(nullable = false, precision = 8, scale = 2)
     private BigDecimal kilometers;
+
+    @Column(name = "date_ride")
+    private LocalDate dateRide;
 
 }
