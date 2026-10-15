@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit.jupiter.EnabledIf;
 import org.springframework.web.client.RestClient;
 
 import static org.assertj.core.api.Assertions.*;
@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.*;
 @Tag("integration")
 @ActiveProfiles("test")
 @SpringBootTest
-class GeocodingServiceIT {
+class GeocodingServiceTest {
 
     private static final String BASE_URL = "https://routes.googleapis.com";
     @Value("${google.maps.apiKey}")
@@ -28,6 +28,10 @@ class GeocodingServiceIT {
     }
 
     @Test
+    @EnabledIf(
+            expression = "#{environment['google.maps.api-key'] != null && !environment['google.maps.api-key'].isBlank()}",
+            reason = "Pas de clé Google Maps configurée",
+            loadContext = true)
     void shouldReachGoogleAndGeocodeAddress_withValidKey() {
         GeocodingService service = serviceWithKey(apiKey);
         double km = service.geocode("Tour Eiffel, Paris", "Place Bellecour, Lyon");
