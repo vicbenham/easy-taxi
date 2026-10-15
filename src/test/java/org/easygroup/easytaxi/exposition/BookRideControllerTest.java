@@ -6,6 +6,7 @@ import org.easygroup.easytaxi.domain.Journey;
 import org.easygroup.easytaxi.domain.Rider;
 import org.easygroup.easytaxi.domain.ServiceType;
 import org.easygroup.easytaxi.services.BookRideUseCase;
+import org.easygroup.easytaxi.services.RideEstimateUseCase;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -24,7 +25,9 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standal
 class BookRideControllerTest {
 
     private final BookRideUseCase bookRideUseCase = mock(BookRideUseCase.class);
-    private final MockMvc mockMvc = standaloneSetup(new BookRideController(bookRideUseCase)).build();
+    private final RideEstimateUseCase rideEstimateUseCase = mock(RideEstimateUseCase.class);
+    private final MockMvc mockMvc = standaloneSetup(
+            new BookRideController(bookRideUseCase, rideEstimateUseCase)).build();
 
     @Test
     void booksARideAndReturnsItsPrice() throws Exception {
@@ -42,7 +45,8 @@ class BookRideControllerTest {
                                   "departure": "PARIS",
                                   "arrival": "LYON",
                                   "kilometers": 10.0,
-                                  "serviceType": "UBER_X"
+                                  "serviceType": "UBER_X",
+                                  "token": null
                                 }
                                 """))
                 .andExpect(status().isOk())
@@ -63,7 +67,8 @@ class BookRideControllerTest {
                                   "departure": "PARIS",
                                   "arrival": "LYON",
                                   "kilometers": 10.0,
-                                  "serviceType": "STANDARD"
+                                  "serviceType": "STANDARD",
+                                  "token": null
                                 }
                                 """))
                 .andExpect(status().isBadRequest());

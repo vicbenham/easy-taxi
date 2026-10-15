@@ -1,5 +1,6 @@
 package org.easygroup.easytaxi.exposition;
 
+import com.jayway.jsonpath.JsonPath;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.easygroup.easytaxi.persistence.entity.BookingEntity;
@@ -18,6 +19,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -92,6 +94,41 @@ class RideApiIntegrationTest {
                                 }
                                 """))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void estimateReturnsATokenWithoutCreatingABookingAndBooksAtTheEstimatedPrice() throws Exception {
+        long initialBookingCount = entityManager.createQuery(
+                "select count(booking) from BookingEntity booking", Long.class).getSingleResult();
+
+        String estimateResponse = mockMvc.perform(post("/api/rides/estimate")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "riderMoney": 100.0,
+                                  "riderBirthDate": "1990-01-01",
+                                  "driverAvailable": true,
+                                  "departure": "PARIS",
+                                  "arrival": "PARIS",
+                                  "kilometers": 10.0,
+                                  "serviceType": "UBER_X"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.price").value(12.0))
+                .andExpect(jsonPath("$.token").isNotEmpty())
+                .andExpect(jsonPath("$.expiresAt").isNotEmpty())
+                .andReturn().getResponse().getContentAsString();
+        String token = JsonPath.read(estimateResponse, "$.token");
+
+        assertEquals(initialBookingCount, entityManager.createQuery(
+                "select count(booking) from BookingEntity booking", Long.class).getSingleResult());
+
+        mockMvc.perform(post("/api/rides/book")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"token\":\"%s\"}".formatted(token)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.price").value(12.0));
     }
 
     @Test
