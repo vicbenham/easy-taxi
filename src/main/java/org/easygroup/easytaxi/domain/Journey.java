@@ -20,9 +20,9 @@ public class Journey {
 
         Double basePrice = PRICE_PER_KILOMETER * kilometers;
 
-        if(departure.equals("PARIS") && arrival.equals("PARIS")) return basePrice + 2.00;
-        if(departure.equals("PARIS")) return basePrice + 10.00;
-        return basePrice;
+        if (departure.equals("PARIS") && arrival.equals("PARIS")) basePrice += 2.00;
+        else if (departure.equals("PARIS")) basePrice += 10.00;
 
+        return basePrice;
     }
 }

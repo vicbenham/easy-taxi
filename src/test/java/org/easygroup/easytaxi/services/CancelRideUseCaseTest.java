@@ -8,14 +8,17 @@ import org.easygroup.easytaxi.exceptions.EasyTaxiException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestClassOrder;
 
+import java.time.Clock;
 import java.time.LocalDate;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 
 class CancelRideUseCaseTest {
 
-    BookRideUseCase bookRideUseCase = new BookRideUseCase();
+    BookRideUseCase bookRideUseCase = new BookRideUseCase(
+            new PricingUseCase(Clock.systemUTC(), List.of(new ChristmasPricingUseCase())));
 
     CancelRideUseCase cancelRideUseCase = new CancelRideUseCase();
 

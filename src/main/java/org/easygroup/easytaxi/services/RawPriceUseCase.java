@@ -6,17 +6,20 @@ import org.springframework.stereotype.Service;
 public class RawPriceUseCase {
 
     private final Geocoder geocoder;
+    private final PricingUseCase pricingUseCase;
     private final static Double PRICE_PER_KILOMETER = 0.5;
 
 
-    public RawPriceUseCase(Geocoder geocoder) {
+    public RawPriceUseCase(Geocoder geocoder, PricingUseCase pricingUseCase) {
         this.geocoder = geocoder;
+        this.pricingUseCase = pricingUseCase;
     }
 
     public double calculatePrice(String origin, String destination) {
         double distance = geocoder.geocode(origin, destination);
         double basePrice = PRICE_PER_KILOMETER * distance;
-        return basePrice + applyParisException(origin, destination);
+        double total = basePrice + applyParisException(origin, destination);
+        return pricingUseCase.calculatePrice(total);
     }
 
     private double applyParisException(String origin, String destination){

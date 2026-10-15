@@ -4,19 +4,25 @@ import org.easygroup.easytaxi.domain.Booking;
 import org.easygroup.easytaxi.domain.Driver;
 import org.easygroup.easytaxi.domain.Journey;
 import org.easygroup.easytaxi.domain.Rider;
+import org.springframework.stereotype.Service;
 
 import java.util.Objects;
 
+@Service
 public class BookRideUseCase {
 
-    public Booking bookRide(Driver driver, Rider rider, Journey journey) {
+    private final PricingUseCase pricingUseCase;
 
-        Booking booking = new Booking(journey);
+    public BookRideUseCase(PricingUseCase pricingUseCase) {
+        this.pricingUseCase = pricingUseCase;
+    }
+
+    public Booking bookRide(Driver driver, Rider rider, Journey journey) {
 
         if(Objects.nonNull(rider.getCurrentRide())) throw new RuntimeException();
         if(!driver.isAvailable()) throw new RuntimeException();
 
-        booking.calculatePrice();
-        return booking;
+        double price = pricingUseCase.calculatePrice(journey.calculatePrice());
+        return new Booking(journey, price);
     }
 }

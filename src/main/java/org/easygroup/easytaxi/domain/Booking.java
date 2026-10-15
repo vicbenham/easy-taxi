@@ -5,15 +5,12 @@ import lombok.Getter;
 public class Booking {
 
     @Getter
-    private Double price;
+    private final Double price;
     private final Journey journey;
 
-    public Booking(Journey journey) {
+    public Booking(Journey journey, Double price) {
         this.journey = journey;
-    }
-
-    public void calculatePrice(){
-         this.price = journey.calculatePrice();
+        this.price = price;
     }
 
 }
