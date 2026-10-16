@@ -25,14 +25,6 @@ class RawPriceUseCaseTest {
         assert(price == expectedPrice);
     }
 
-    @Test
-    void shouldDoubleThePriceOnChristmasEvening() {
-        FakeGeocoder geocoder = new FakeGeocoder()
-                .withDistance("Point A, Paris", "Point B, Paris", 10.0);
-        RawPriceUseCase useCase = new RawPriceUseCase(geocoder, createPricingUseCase(christmasEveEvening()));
-
-        assertEquals(14.0, useCase.calculatePrice("Point A, Paris", "Point B, Paris"));
-    }
 
     @Test
     void shouldDoubleThePriceOnChristmasDay() {
@@ -41,10 +33,6 @@ class RawPriceUseCaseTest {
         RawPriceUseCase useCase = new RawPriceUseCase(geocoder, createPricingUseCase(christmasDay()));
 
         assertEquals(14.0, useCase.calculatePrice("Point A, Paris", "Point B, Paris"));
-    }
-
-    private Clock christmasEveEvening() {
-        return Clock.fixed(Instant.parse("2026-12-24T18:00:00Z"), ZoneId.of("UTC"));
     }
 
     private Clock christmasDay() {

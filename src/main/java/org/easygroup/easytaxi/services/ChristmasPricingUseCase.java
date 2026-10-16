@@ -11,8 +11,7 @@ public class ChristmasPricingUseCase implements PricingRule {
     public double apply(double price, PricingContext context) {
         var dateTime = context.dateTime();
         boolean christmasPeriod = dateTime.getMonthValue() == 12 &&
-                (dateTime.getDayOfMonth() == 25 ||
-                        (dateTime.getDayOfMonth() == 24 && dateTime.getHour() >= 18));
+                (dateTime.getDayOfMonth() == 25);
         return christmasPeriod ? price * 2 : price;
     }
 }

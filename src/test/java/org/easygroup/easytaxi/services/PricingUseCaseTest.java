@@ -79,7 +79,7 @@ class PricingUseCaseTest {
                 10.0,
                 ServiceType.UBER_X,
                 LocalDate.of(1990, 1, 1),
-                LocalDateTime.of(2026, 12, 24, 18, 30)));
+                LocalDateTime.of(2026, 12, 25, 18, 30)));
     }
 
     @Test
