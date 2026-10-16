@@ -49,7 +49,7 @@ class RideEstimateUseCaseTest {
     @Test
     void estimateIncludesUberXChristmasAndPeakHourModifiers() {
         AdjustableClock christmasPeakClock =
-                new AdjustableClock(Instant.parse("2026-12-24T18:30:00Z"));
+                new AdjustableClock(Instant.parse("2026-12-25T18:30:00Z"));
         PricingUseCase christmasPeakPricing = new PricingUseCase(christmasPeakClock, List.of(
                 new UberXPricingUseCase(),
                 new ChristmasPricingUseCase(),

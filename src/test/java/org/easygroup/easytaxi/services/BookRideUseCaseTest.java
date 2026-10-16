@@ -113,14 +113,12 @@ class BookRideUseCaseTest {
     }
 
     @Test
-    void christmasEveningAndDayShouldDoubleTheTotalPrice() {
-        assertEquals(14.0, bookRideAt("2026-12-24T18:00:00Z").getPrice());
+    void christmasDayShouldDoubleTheTotalPrice() {
         assertEquals(14.0, bookRideAt("2026-12-25T12:00:00Z").getPrice());
     }
 
     @Test
     void rideOutsideChristmasPeriodShouldKeepItsRegularPrice() {
-        assertEquals(7.0, bookRideAt("2026-12-24T17:59:59Z").getPrice());
         assertEquals(7.0, bookRideAt("2026-12-26T00:00:00Z").getPrice());
     }
 

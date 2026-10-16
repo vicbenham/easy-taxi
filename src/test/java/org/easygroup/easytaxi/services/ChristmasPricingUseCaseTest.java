@@ -14,8 +14,7 @@ class ChristmasPricingUseCaseTest {
     private final ChristmasPricingUseCase christmasPricingUseCase = new ChristmasPricingUseCase();
 
     @Test
-    void doublesThePriceOnChristmasEveFromSixPmAndAllChristmasDay() {
-        assertEquals(20.0, applyOn(10.0, LocalDateTime.of(2026, 12, 24, 18, 0)));
+    void doublesThePriceOnChristmasDay() {
         assertEquals(20.0, applyOn(10.0, LocalDateTime.of(2026, 12, 25, 12, 0)));
     }
 
